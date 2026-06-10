@@ -36,7 +36,7 @@ const cloudflareLogger = {
   error: createLog('error', console.error),
   fatal: createLog('fatal', console.error),
   silent: () => {},
-} as any // Use PayloadLogger type when it's exported
+} // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
 const cloudflare =
   isCLI || !isProduction
