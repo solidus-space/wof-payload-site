@@ -9,6 +9,7 @@
     "skipLibCheck": true,
     "strict": true,
     "strictNullChecks": false,
+    "noUncheckedSideEffectImports": false,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
