@@ -69,6 +69,17 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    programmes: Programme;
+    sponsors: Sponsor;
+    pages: Page;
+    posts: Post;
+    categories: Category;
+    people: Person;
+    schools: School;
+    awards: Award;
+    'award-categories': AwardCategory;
+    testimonials: Testimonial;
+    events: Event;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +89,17 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    programmes: ProgrammesSelect<false> | ProgrammesSelect<true>;
+    sponsors: SponsorsSelect<false> | SponsorsSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
+    posts: PostsSelect<false> | PostsSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    people: PeopleSelect<false> | PeopleSelect<true>;
+    schools: SchoolsSelect<false> | SchoolsSelect<true>;
+    awards: AwardsSelect<false> | AwardsSelect<true>;
+    'award-categories': AwardCategoriesSelect<false> | AwardCategoriesSelect<true>;
+    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
+    events: EventsSelect<false> | EventsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -87,8 +109,16 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    header: Header;
+    footer: Footer;
+    'site-settings': SiteSetting;
+  };
+  globalsSelect: {
+    header: HeaderSelect<false> | HeaderSelect<true>;
+    footer: FooterSelect<false> | FooterSelect<true>;
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -161,6 +191,408 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "programmes".
+ */
+export interface Programme {
+  id: number;
+  name: string;
+  slug: string;
+  logo?: (number | null) | Media;
+  strapline?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Link to the programme microsite, if it lives on its own domain
+   */
+  externalUrl?: string | null;
+  /**
+   * Controls display order on the connected programmes grid
+   */
+  order?: number | null;
+  sponsors?: (number | Sponsor)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sponsors".
+ */
+export interface Sponsor {
+  id: number;
+  name: string;
+  logo?: (number | null) | Media;
+  website?: string | null;
+  tier?: ('headline' | 'sponsor' | 'association' | 'educational' | 'media') | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  programmes?: (number | Programme)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  title: string;
+  slug: string;
+  site: 'main' | 'esg' | 'kindness';
+  hero?: {
+    heading?: string | null;
+    subheading?: string | null;
+    image?: (number | null) | Media;
+  };
+  layout?:
+    | (
+        | {
+            content?: {
+              root: {
+                type: string;
+                children: {
+                  type: any;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            } | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'richText';
+          }
+        | {
+            items?:
+              | {
+                  value: string;
+                  label: string;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'stats';
+          }
+        | {
+            heading?: string | null;
+            sponsors?: (number | Sponsor)[] | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'logoGrid';
+          }
+        | {
+            heading?: string | null;
+            testimonials?: (number | Testimonial)[] | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'testimonials';
+          }
+        | {
+            heading?: string | null;
+            text?: string | null;
+            buttonLabel?: string | null;
+            buttonUrl?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'cta';
+          }
+      )[]
+    | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials".
+ */
+export interface Testimonial {
+  id: number;
+  quote: string;
+  attribution: string;
+  /**
+   * Role and/or organisation, e.g. "CEO, Unilever"
+   */
+  role?: string | null;
+  photo?: (number | null) | Media;
+  person?: (number | null) | Person;
+  site: 'main' | 'esg' | 'kindness';
+  programmes?: (number | Programme)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "people".
+ */
+export interface Person {
+  id: number;
+  name: string;
+  slug: string;
+  photo?: (number | null) | Media;
+  type: 'winner' | 'shortlisted' | 'judge' | 'supporter' | 'ambassador' | 'team';
+  /**
+   * Job title or role, e.g. "CEO" or "Founder"
+   */
+  role?: string | null;
+  organisation?: string | null;
+  bio?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  socialLinks?:
+    | {
+        platform?: ('linkedin' | 'twitter' | 'instagram' | 'website') | null;
+        url?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Award editions this person won or was shortlisted in
+   */
+  awardEntries?:
+    | {
+        award: number | Award;
+        year: string;
+        category?: (number | null) | AwardCategory;
+        result?: ('winner' | 'shortlisted') | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "awards".
+ */
+export interface Award {
+  id: number;
+  /**
+   * e.g. "WOF Awards UK 2023" or "50 Leading Lights APAC 2026"
+   */
+  title: string;
+  programme: number | Programme;
+  year: number;
+  /**
+   * e.g. "UK", "Southeast Asia", "Asia Pacific"
+   */
+  region?: string | null;
+  headlineSponsor?: (number | null) | Sponsor;
+  status?: ('upcoming' | 'nominations-open' | 'shortlist' | 'winners-announced') | null;
+  /**
+   * Nomination timeline, e.g. nominations open/close, judging day, ceremony
+   */
+  keyDates?:
+    | {
+        label: string;
+        date: string;
+        id?: string | null;
+      }[]
+    | null;
+  nominationFormUrl?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "award-categories".
+ */
+export interface AwardCategory {
+  id: number;
+  name: string;
+  programme: number | Programme;
+  description?: string | null;
+  /**
+   * Judging and eligibility criteria for this category
+   */
+  criteria?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: number;
+  title: string;
+  slug: string;
+  site: 'main' | 'esg' | 'kindness';
+  heroImage?: (number | null) | Media;
+  excerpt?: string | null;
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  publishedDate?: string | null;
+  categories?: (number | Category)[] | null;
+  author?: (number | null) | User;
+  taggedPeople?: (number | Person)[] | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "schools".
+ */
+export interface School {
+  id: number;
+  name: string;
+  logo?: (number | null) | Media;
+  /**
+   * Location or region, e.g. "London" or "Greater Manchester"
+   */
+  region?: string | null;
+  contactName?: string | null;
+  contactEmail?: string | null;
+  ambassadors?: (number | Person)[] | null;
+  /**
+   * Notes on visits, events and engagement with the school
+   */
+  notes?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  title: string;
+  date?: string | null;
+  location?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  programme?: (number | null) | Programme;
+  gallery?:
+    | {
+        image: number | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -190,6 +622,50 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'programmes';
+        value: number | Programme;
+      } | null)
+    | ({
+        relationTo: 'sponsors';
+        value: number | Sponsor;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'posts';
+        value: number | Post;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: number | Category;
+      } | null)
+    | ({
+        relationTo: 'people';
+        value: number | Person;
+      } | null)
+    | ({
+        relationTo: 'schools';
+        value: number | School;
+      } | null)
+    | ({
+        relationTo: 'awards';
+        value: number | Award;
+      } | null)
+    | ({
+        relationTo: 'award-categories';
+        value: number | AwardCategory;
+      } | null)
+    | ({
+        relationTo: 'testimonials';
+        value: number | Testimonial;
+      } | null)
+    | ({
+        relationTo: 'events';
+        value: number | Event;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -273,6 +749,263 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "programmes_select".
+ */
+export interface ProgrammesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  logo?: T;
+  strapline?: T;
+  description?: T;
+  externalUrl?: T;
+  order?: T;
+  sponsors?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sponsors_select".
+ */
+export interface SponsorsSelect<T extends boolean = true> {
+  name?: T;
+  logo?: T;
+  website?: T;
+  tier?: T;
+  description?: T;
+  programmes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  site?: T;
+  hero?:
+    | T
+    | {
+        heading?: T;
+        subheading?: T;
+        image?: T;
+      };
+  layout?:
+    | T
+    | {
+        richText?:
+          | T
+          | {
+              content?: T;
+              id?: T;
+              blockName?: T;
+            };
+        stats?:
+          | T
+          | {
+              items?:
+                | T
+                | {
+                    value?: T;
+                    label?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        logoGrid?:
+          | T
+          | {
+              heading?: T;
+              sponsors?: T;
+              id?: T;
+              blockName?: T;
+            };
+        testimonials?:
+          | T
+          | {
+              heading?: T;
+              testimonials?: T;
+              id?: T;
+              blockName?: T;
+            };
+        cta?:
+          | T
+          | {
+              heading?: T;
+              text?: T;
+              buttonLabel?: T;
+              buttonUrl?: T;
+              id?: T;
+              blockName?: T;
+            };
+      };
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts_select".
+ */
+export interface PostsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  site?: T;
+  heroImage?: T;
+  excerpt?: T;
+  content?: T;
+  publishedDate?: T;
+  categories?: T;
+  author?: T;
+  taggedPeople?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "people_select".
+ */
+export interface PeopleSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  photo?: T;
+  type?: T;
+  role?: T;
+  organisation?: T;
+  bio?: T;
+  socialLinks?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        id?: T;
+      };
+  awardEntries?:
+    | T
+    | {
+        award?: T;
+        year?: T;
+        category?: T;
+        result?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "schools_select".
+ */
+export interface SchoolsSelect<T extends boolean = true> {
+  name?: T;
+  logo?: T;
+  region?: T;
+  contactName?: T;
+  contactEmail?: T;
+  ambassadors?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "awards_select".
+ */
+export interface AwardsSelect<T extends boolean = true> {
+  title?: T;
+  programme?: T;
+  year?: T;
+  region?: T;
+  headlineSponsor?: T;
+  status?: T;
+  keyDates?:
+    | T
+    | {
+        label?: T;
+        date?: T;
+        id?: T;
+      };
+  nominationFormUrl?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "award-categories_select".
+ */
+export interface AwardCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  programme?: T;
+  description?: T;
+  criteria?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials_select".
+ */
+export interface TestimonialsSelect<T extends boolean = true> {
+  quote?: T;
+  attribution?: T;
+  role?: T;
+  photo?: T;
+  person?: T;
+  site?: T;
+  programmes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  title?: T;
+  date?: T;
+  location?: T;
+  description?: T;
+  programme?: T;
+  gallery?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -310,6 +1043,278 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "header".
+ */
+export interface Header {
+  id: number;
+  main?: {
+    logo?: (number | null) | Media;
+    navLinks?:
+      | {
+          label: string;
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  esg?: {
+    logo?: (number | null) | Media;
+    navLinks?:
+      | {
+          label: string;
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  kindness?: {
+    logo?: (number | null) | Media;
+    navLinks?:
+      | {
+          label: string;
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "footer".
+ */
+export interface Footer {
+  id: number;
+  main?: {
+    navLinks?:
+      | {
+          label: string;
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+    socialLinks?:
+      | {
+          platform: 'linkedin' | 'twitter' | 'instagram' | 'facebook' | 'youtube';
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+    legalText?: string | null;
+  };
+  esg?: {
+    navLinks?:
+      | {
+          label: string;
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+    socialLinks?:
+      | {
+          platform: 'linkedin' | 'twitter' | 'instagram' | 'facebook' | 'youtube';
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+    legalText?: string | null;
+  };
+  kindness?: {
+    navLinks?:
+      | {
+          label: string;
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+    socialLinks?:
+      | {
+          platform: 'linkedin' | 'twitter' | 'instagram' | 'facebook' | 'youtube';
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+    legalText?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  newsletter?: {
+    heading?: string | null;
+    text?: string | null;
+    /**
+     * Mailing list provider form action / signup endpoint
+     */
+    formActionUrl?: string | null;
+  };
+  defaultSeo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: (number | null) | Media;
+  };
+  /**
+   * Impact statistics shown on the homepage
+   */
+  impactStats?:
+    | {
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "header_select".
+ */
+export interface HeaderSelect<T extends boolean = true> {
+  main?:
+    | T
+    | {
+        logo?: T;
+        navLinks?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              id?: T;
+            };
+      };
+  esg?:
+    | T
+    | {
+        logo?: T;
+        navLinks?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              id?: T;
+            };
+      };
+  kindness?:
+    | T
+    | {
+        logo?: T;
+        navLinks?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              id?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "footer_select".
+ */
+export interface FooterSelect<T extends boolean = true> {
+  main?:
+    | T
+    | {
+        navLinks?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              id?: T;
+            };
+        socialLinks?:
+          | T
+          | {
+              platform?: T;
+              url?: T;
+              id?: T;
+            };
+        legalText?: T;
+      };
+  esg?:
+    | T
+    | {
+        navLinks?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              id?: T;
+            };
+        socialLinks?:
+          | T
+          | {
+              platform?: T;
+              url?: T;
+              id?: T;
+            };
+        legalText?: T;
+      };
+  kindness?:
+    | T
+    | {
+        navLinks?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              id?: T;
+            };
+        socialLinks?:
+          | T
+          | {
+              platform?: T;
+              url?: T;
+              id?: T;
+            };
+        legalText?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  newsletter?:
+    | T
+    | {
+        heading?: T;
+        text?: T;
+        formActionUrl?: T;
+      };
+  defaultSeo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
+  impactStats?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

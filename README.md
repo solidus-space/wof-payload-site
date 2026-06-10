@@ -1,119 +1,133 @@
-# Payload Cloudflare Template
+# wof-payload-site
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/payloadcms/payload/tree/main/templates/with-cloudflare-d1)
+A [Payload CMS](https://payloadcms.com) + Next.js app deployed to a [Dokku](https://dokku.com) host (e.g. a Hetzner VPS) via Docker.
 
-**This can only be deployed on Paid Workers right now due to size limits.** This template comes configured with the bare minimum to get started on anything you need.
+- **Database:** Postgres (`@payloadcms/db-postgres`)
+- **File storage:** S3-compatible (`@payloadcms/storage-s3`) — Minio locally, Backblaze B2 (or any S3 endpoint) in production
+- **Deployment:** Dockerfile build via `git push dokku`
 
-## Quick start
+## Local development
 
-This template can be deployed directly to Cloudflare Workers by clicking the button to take you to the setup screen.
+1. Start Postgres and Minio:
 
-From there you can connect your code to a git provider such Github or Gitlab, name your Workers, D1 Database and R2 Bucket as well as attach any additional environment variables or services you need.
+   ```bash
+   docker compose up -d
+   ```
 
-## Quick Start - local setup
+   This also creates the `wof-payload` bucket in Minio (console at http://localhost:9001, `minioadmin`/`minioadmin`).
 
-To spin up this template locally, follow these steps:
+2. Copy env vars and set a secret:
 
-### Clone
+   ```bash
+   cp .env.example .env
+   # set PAYLOAD_SECRET, e.g. openssl rand -hex 32
+   ```
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. Cloudflare will connect your app to a git provider such as Github and you can access your code from there.
+3. Install and run:
 
-### Local Development
+   ```bash
+   pnpm install
+   pnpm dev
+   ```
 
-## How it works
+4. Open http://localhost:3000 and create your first admin user at `/admin`.
 
-Out of the box, using [`Wrangler`](https://developers.cloudflare.com/workers/wrangler/) will automatically create local bindings for you to connect to the remote services and it can even create a local mock of the services you're using with Cloudflare.
+## Migrations
 
-We've pre-configured Payload for you with the following:
-
-### Collections
-
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
-
-- #### Users (Authentication)
-
-  Users are auth-enabled collections that have access to the admin panel.
-
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/main/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
-
-- #### Media
-
-  This is the uploads enabled collection.
-
-### Image Storage (R2)
-
-Images will be served from an R2 bucket which you can then further configure to use a CDN to serve for your frontend directly.
-
-### D1 Database
-
-The Worker will have direct access to a D1 SQLite database which Wrangler can connect locally to, just note that you won't have a connection string as you would typically with other providers.
-
-You can enable read replicas by adding `readReplicas: 'first-primary'` in the DB adapter and then enabling it on your D1 Cloudflare dashboard. Read more about this feature on [our docs](https://payloadcms.com/docs/database/sqlite#d1-read-replicas).
-
-## Working with Cloudflare
-
-Firstly, after installing dependencies locally you need to authenticate with Wrangler by running:
-
-```bash
-pnpm wrangler login
-```
-
-This will take you to Cloudflare to login and then you can use the Wrangler CLI locally for anything, use `pnpm wrangler help` to see all available options.
-
-Wrangler is pretty smart so it will automatically bind your services for local development just by running `pnpm dev`.
-
-## Deployments
-
-When you're ready to deploy, first make sure you have created your migrations:
+Migrations live in `src/migrations` and are run automatically on app startup in production (`prodMigrations`). After changing collections:
 
 ```bash
 pnpm payload migrate:create
+git add src/migrations && git commit -m "Add migration"
 ```
 
-Then run the following command:
+To run them manually in development:
 
 ```bash
-pnpm run deploy
+pnpm migrate
 ```
 
-This will spin up Wrangler in `production` mode, run any created migrations, build the app and then deploy the bundle up to Cloudflare.
+## Deploying with Dokku
 
-That's it! You can if you wish move these steps into your CI pipeline as well.
+### One-time server scaffolding
 
-## Enabling logs
+Run these on the Dokku host (or via `ssh dokku@<host>` for the app/config commands):
 
-By default logs are not enabled for your API, we've made this decision because it does run against your quota so we've left it opt-in. But you can easily enable logs in one click in the Cloudflare panel, [see docs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/#enable-workers-logs).
+```bash
+# 1. Create the app
+dokku apps:create wof-payload-site
 
-### Logger Configuration
+# 2. Postgres (install plugin once per server)
+sudo dokku plugin:install https://github.com/dokku/dokku-postgres.git postgres
+dokku postgres:create wof-payload-db
+dokku postgres:link wof-payload-db wof-payload-site   # sets DATABASE_URL
 
-This template includes a custom console-based logger compatible with Cloudflare Workers. Payload's default logger uses `pino-pretty`, which relies on Node.js APIs not available in Workers and would cause `fs.write is not implemented` errors.
+# 3. App config (runtime env vars)
+dokku config:set wof-payload-site \
+  PAYLOAD_SECRET="$(openssl rand -hex 32)" \
+  NEXT_PUBLIC_SERVER_URL="https://cms.example.com" \
+  S3_ENDPOINT="https://s3.eu-central-003.backblazeb2.com" \
+  S3_BUCKET="<your-b2-bucket>" \
+  S3_ACCESS_KEY_ID="<keyID>" \
+  S3_SECRET_ACCESS_KEY="<applicationKey>" \
+  S3_REGION="eu-central-003" \
+  S3_FORCE_PATH_STYLE="false"
 
-The custom logger in `payload.config.ts`:
+# 4. Domain + ports
+dokku domains:set wof-payload-site cms.example.com
+dokku ports:set wof-payload-site http:80:3000
 
-- Routes logs through `console.*` methods which Workers handles correctly
-- Outputs JSON-formatted logs for Cloudflare observability
-- Only active in production (development uses the default `pino-pretty` for better DX)
+# 5. HTTPS via Let's Encrypt (install plugin once per server)
+sudo dokku plugin:install https://github.com/dokku/dokku-letsencrypt.git
+dokku letsencrypt:set wof-payload-site email you@example.com
+dokku letsencrypt:enable wof-payload-site
+dokku letsencrypt:cron-job --add
+```
 
-You can control the log level via the `PAYLOAD_LOG_LEVEL` environment variable (e.g., `debug`, `info`, `warn`, `error`).
+> Dokku detects the `Dockerfile` automatically and builds with it. The container listens on port 3000 (`EXPOSE 3000`).
 
-### Diagnostic Channel Errors
+### Deploy
 
-If you see "Failed to publish diagnostic channel message" errors in your observability logs, these typically come from the `undici` HTTP client library. The template includes `skipSafeFetch: true` in the Media collection to use native fetch instead of undici for file uploads, which helps reduce these errors.
+From your machine:
 
-Cloudflare Workers runs in an [isolated environment that cannot access private IP ranges](https://developers.cloudflare.com/workers-vpc/examples/route-across-private-services/) by default, providing built-in SSRF protection. This makes `skipSafeFetch` safe to use.
+```bash
+git remote add dokku dokku@<your-hetzner-ip>:wof-payload-site
+git push dokku main
+```
 
-## Known issues
+Migrations run automatically when the new container boots. Zero-downtime checks are configured in `app.json`.
 
-### GraphQL
+### Useful commands
 
-We are currently waiting on some issues with GraphQL to be [fixed upstream in Workers](https://github.com/cloudflare/workerd/issues/5175) so full support for GraphQL is not currently guaranteed when deployed.
+```bash
+dokku logs wof-payload-site -t          # tail logs
+dokku ps:report wof-payload-site        # process status
+dokku postgres:connect wof-payload-db   # psql shell
+dokku postgres:backup-auth wof-payload-db <aws-key> <aws-secret>  # configure backups
+dokku enter wof-payload-site web        # shell into the running container
+```
 
-### Worker size limits
+## Environment variables
 
-We currently recommend deploying this template to the Paid Workers plan due to bundle [size limits](https://developers.cloudflare.com/workers/platform/limits/#worker-size) of 3mb. We're actively trying to reduce our bundle footprint over time to better meet this metric.
+| Variable                 | Description                                          |
+| ------------------------ | ---------------------------------------------------- |
+| `PAYLOAD_SECRET`         | Secret for auth/JWT — keep stable across deploys     |
+| `DATABASE_URL`           | Postgres connection string (set by `postgres:link`)  |
+| `NEXT_PUBLIC_SERVER_URL` | Public URL, used for auth cookies & CORS             |
+| `S3_ENDPOINT`            | S3 endpoint (Minio locally, Backblaze in production) |
+| `S3_BUCKET`              | Bucket name                                          |
+| `S3_ACCESS_KEY_ID`       | Access key                                           |
+| `S3_SECRET_ACCESS_KEY`   | Secret key                                           |
+| `S3_REGION`              | Region (e.g. `eu-central-003` for Backblaze)         |
+| `S3_FORCE_PATH_STYLE`    | `true` for Minio, `false` for Backblaze              |
 
-This also applies to your own code, in the case of importing a lot of libraries you may find yourself limited by the bundle.
+## Collections
+
+- **Users** — auth-enabled collection with access to the admin panel.
+- **Media** — upload-enabled collection; files are stored in the S3 bucket.
+
+See the [Payload docs](https://payloadcms.com/docs) for how to extend these.
 
 ## Questions
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+If you have any issues or questions, reach out on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).

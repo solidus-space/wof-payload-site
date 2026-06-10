@@ -1,15 +1,21 @@
-import * as migration_20250929_111647 from './20250929_111647';
-import * as migration_20260610_213325 from './20260610_213325';
+import * as migration_20260610_221855_initial from './20260610_221855_initial';
+import * as migration_20260610_223559_add_programmes_sponsors from './20260610_223559_add_programmes_sponsors';
+import * as migration_20260610_223945_add_content_models from './20260610_223945_add_content_models';
 
 export const migrations = [
   {
-    up: migration_20250929_111647.up,
-    down: migration_20250929_111647.down,
-    name: '20250929_111647',
+    up: migration_20260610_221855_initial.up,
+    down: migration_20260610_221855_initial.down,
+    name: '20260610_221855_initial',
   },
   {
-    up: migration_20260610_213325.up,
-    down: migration_20260610_213325.down,
-    name: '20260610_213325'
+    up: migration_20260610_223559_add_programmes_sponsors.up,
+    down: migration_20260610_223559_add_programmes_sponsors.down,
+    name: '20260610_223559_add_programmes_sponsors',
+  },
+  {
+    up: migration_20260610_223945_add_content_models.up,
+    down: migration_20260610_223945_add_content_models.down,
+    name: '20260610_223945_add_content_models'
   },
 ];

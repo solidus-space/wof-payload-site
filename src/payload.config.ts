@@ -1,79 +1,81 @@
-import fs from 'fs'
 import path from 'path'
-import { sqliteD1Adapter } from '@payloadcms/db-d1-sqlite'
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
-import { CloudflareContext, getCloudflareContext } from '@opennextjs/cloudflare'
-import { GetPlatformProxyOptions } from 'wrangler'
-import { r2Storage } from '@payloadcms/storage-r2'
+import { s3Storage } from '@payloadcms/storage-s3'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
+import { Programmes } from './collections/Programmes'
+import { Sponsors } from './collections/Sponsors'
+import { Pages } from './collections/Pages'
+import { Posts } from './collections/Posts'
+import { Categories } from './collections/Categories'
+import { People } from './collections/People'
+import { Schools } from './collections/Schools'
+import { Awards } from './collections/Awards'
+import { AwardCategories } from './collections/AwardCategories'
+import { Testimonials } from './collections/Testimonials'
+import { Events } from './collections/Events'
+import { Header } from './globals/Header'
+import { Footer } from './globals/Footer'
+import { SiteSettings } from './globals/SiteSettings'
+import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
-const realpath = (value: string) => (fs.existsSync(value) ? fs.realpathSync(value) : undefined)
-
-const isCLI = process.argv.some((value) => realpath(value).endsWith(path.join('payload', 'bin.js')))
-const isProduction = process.env.NODE_ENV === 'production'
-
-const createLog =
-  (level: string, fn: typeof console.log) => (objOrMsg: object | string, msg?: string) => {
-    if (typeof objOrMsg === 'string') {
-      fn(JSON.stringify({ level, msg: objOrMsg }))
-    } else {
-      fn(JSON.stringify({ level, ...objOrMsg, msg: msg ?? (objOrMsg as { msg?: string }).msg }))
-    }
-  }
-
-const cloudflareLogger = {
-  level: process.env.PAYLOAD_LOG_LEVEL || 'info',
-  trace: createLog('trace', console.debug),
-  debug: createLog('debug', console.debug),
-  info: createLog('info', console.log),
-  warn: createLog('warn', console.warn),
-  error: createLog('error', console.error),
-  fatal: createLog('fatal', console.error),
-  silent: () => {},
-  msgPrefix: '',
-} as any // eslint-disable-next-line @typescript-eslint/no-explicit-any
-
-const cloudflare =
-  isCLI || !isProduction
-    ? await getCloudflareContextFromWrangler()
-    : await getCloudflareContext({ async: true })
 
 export default buildConfig({
+  serverURL: process.env.NEXT_PUBLIC_SERVER_URL,
   admin: {
     user: Users.slug,
     importMap: {
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media],
+  collections: [
+    Users,
+    Media,
+    Programmes,
+    Sponsors,
+    Pages,
+    Posts,
+    Categories,
+    People,
+    Schools,
+    Awards,
+    AwardCategories,
+    Testimonials,
+    Events,
+  ],
+  globals: [Header, Footer, SiteSettings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  db: sqliteD1Adapter({ binding: cloudflare.env.D1 }),
-  logger: isProduction ? cloudflareLogger : undefined,
-  storage: [
-    r2Storage({
-      bucket: cloudflare.env.R2,
+  db: postgresAdapter({
+    pool: {
+      connectionString: process.env.DATABASE_URL,
+    },
+    // Run pending migrations automatically on startup in production
+    prodMigrations: migrations,
+  }),
+  plugins: [
+    s3Storage({
       collections: { media: true },
+      bucket: process.env.S3_BUCKET || '',
+      config: {
+        endpoint: process.env.S3_ENDPOINT,
+        region: process.env.S3_REGION || 'us-east-1',
+        credentials: {
+          accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
+        },
+        // Required for Minio and most S3-compatible providers
+        forcePathStyle: process.env.S3_FORCE_PATH_STYLE !== 'false',
+      },
     }),
   ],
-} as any)
-
-// Adapted from https://github.com/opennextjs/opennextjs-cloudflare/blob/d00b3a13e42e65aad76fba41774815726422cc39/packages/cloudflare/src/api/cloudflare-context.ts#L328C36-L328C46
-function getCloudflareContextFromWrangler(): Promise<CloudflareContext> {
-  return import(/* webpackIgnore: true */ `${'__wrangler'.replaceAll('_', '')}`).then(
-    ({ getPlatformProxy }) =>
-      getPlatformProxy({
-        environment: process.env.CLOUDFLARE_ENV,
-        remoteBindings: isProduction,
-      } satisfies GetPlatformProxyOptions),
-  )
-}
+})
